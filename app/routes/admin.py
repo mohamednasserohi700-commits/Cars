@@ -1,8 +1,12 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash, jsonify, send_file
 from flask_login import login_required, current_user
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from sqlalchemy import func
 import io
+
+KSA_TZ = timezone(timedelta(hours=3))
+def now_ksa():
+    return datetime.now(KSA_TZ).replace(tzinfo=None)
 import json
 import openpyxl
 from app import db
@@ -617,7 +621,7 @@ def export_full_backup():
     """Export every table in the database into a single accurate JSON file."""
     backup = {
         'format_version': BACKUP_FORMAT_VERSION,
-        'exported_at': datetime.now().isoformat(),
+        'exported_at': now_ksa().isoformat(),
         'tables': {}
     }
 
@@ -632,7 +636,7 @@ def export_full_backup():
     buffer = io.BytesIO(json_bytes)
     buffer.seek(0)
 
-    filename = f"backup_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.json"
+    filename = f"backup_{now_ksa().strftime('%Y-%m-%d_%H-%M')}.json"
     return send_file(buffer, as_attachment=True, download_name=filename,
                       mimetype='application/json')
 
