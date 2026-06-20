@@ -64,6 +64,7 @@ class Bus(db.Model):
     name = db.Column(db.String(100), nullable=False)
     total_seats = db.Column(db.Integer, default=50)
     is_active = db.Column(db.Boolean, default=True)
+    is_available = db.Column(db.Boolean, default=True)
     driver_id = db.Column(db.Integer, db.ForeignKey('drivers.id'), nullable=True)
     backup_driver_id = db.Column(db.Integer, db.ForeignKey('drivers.id'), nullable=True)
     backup_bus_id = db.Column(db.Integer, db.ForeignKey('buses.id'), nullable=True)
