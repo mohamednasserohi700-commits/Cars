@@ -1,0 +1,62 @@
+{% extends 'admin/base.html' %}
+{% block title %}سجلات الدخول{% endblock %}
+{% block page_title %}سجلات الدخول{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="fas fa-sign-in-alt text-primary"></i>
+        <span>سجلات دخول الموظفين</span>
+        <span class="badge bg-primary ms-1">{{ logs|length }}</span>
+        <div class="ms-auto">
+            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-print me-1"></i>طباعة
+            </button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" id="logTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الرقم العالمي</th>
+                    <th>الاسم</th>
+                    <th>تاريخ الدخول</th>
+                    <th>وقت الدخول</th>
+                    <th>عنوان IP</th>
+                    <th>نوع الجهاز</th>
+                    <th>المتصفح</th>
+                    <th>الحالة</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><code>{{ log.global_id }}</code></td>
+                    <td>{{ log.employee.name if log.employee else '-' }}</td>
+                    <td>{{ log.login_time.strftime('%Y-%m-%d') }}</td>
+                    <td>{{ log.login_time.strftime('%H:%M:%S') }}</td>
+                    <td><small>{{ log.ip_address }}</small></td>
+                    <td>
+                        <i class="fas fa-{{ 'mobile-alt' if log.device_type == 'Mobile' else 'tablet-alt' if log.device_type == 'Tablet' else 'desktop' }} me-1"></i>
+                        {{ log.device_type }}
+                    </td>
+                    <td><small>{{ log.browser }}</small></td>
+                    <td>
+                        <span class="badge {{ 'bg-success' if log.status == 'success' else 'bg-danger' }}">
+                            {{ 'ناجح' if log.status == 'success' else 'فاشل' }}
+                        </span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="text-center text-muted py-4">لا توجد سجلات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>$(document).ready(function(){ initDataTable('logTable'); });</script>
+{% endblock %}

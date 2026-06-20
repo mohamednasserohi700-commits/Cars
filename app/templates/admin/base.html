@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة تسجيل خطوط النقل{% endblock %}</title>
+
+    <!-- Bootstrap 5 RTL -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Animate.css -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <!-- DataTables -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <!-- Google Fonts Arabic -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #d97706;
+            --info: #0891b2;
+            --sidebar-width: 260px;
+            --navbar-height: 65px;
+            --bg: #f0f4f8;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        [data-theme="dark"] {
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+        * { font-family: 'Cairo', sans-serif; box-sizing: border-box; }
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 1000;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+        }
+        .sidebar-brand {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            text-align: center;
+        }
+        .sidebar-brand img { width: 50px; height: 50px; object-fit: contain; }
+        .sidebar-brand h6 { color: #fff; font-weight: 700; margin: 8px 0 0; font-size: 14px; }
+        .sidebar-brand small { color: rgba(255,255,255,0.5); font-size: 11px; }
+        .sidebar-nav { padding: 15px 0; }
+        .nav-section-title {
+            color: rgba(255,255,255,0.4);
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 15px 20px 5px;
+        }
+        .sidebar-nav .nav-link {
+            color: rgba(255,255,255,0.7);
+            padding: 11px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+            border-radius: 0;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .sidebar-nav .nav-link:hover,
+        .sidebar-nav .nav-link.active {
+            color: #fff;
+            background: rgba(255,255,255,0.08);
+            border-right: 3px solid var(--primary);
+        }
+        .sidebar-nav .nav-link i { width: 20px; text-align: center; font-size: 15px; }
+        .sidebar-nav .badge-count {
+            margin-right: auto;
+            background: var(--primary);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            margin-right: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .topnav {
+            height: var(--navbar-height);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            gap: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .topnav .page-title { font-weight: 700; font-size: 18px; color: var(--text); margin: 0; }
+        .topnav .ms-auto { display: flex; align-items: center; gap: 15px; }
+        .content-area { flex: 1; padding: 25px; }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border);
+            padding: 16px 20px;
+            font-weight: 700;
+            font-size: 15px;
+        }
+        .stat-card {
+            border-radius: 14px;
+            padding: 20px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+        .stat-card .icon {
+            width: 55px; height: 55px; border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 22px;
+        }
+        .stat-card .num { font-size: 32px; font-weight: 800; line-height: 1; }
+        .stat-card .label { font-size: 13px; opacity: 0.9; margin-top: 5px; }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: -20px; left: -20px;
+            width: 100px; height: 100px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 50%;
+        }
+
+        /* Tables */
+        .table { color: var(--text); }
+        .table th { font-weight: 600; font-size: 13px; color: var(--text-muted); border-bottom: 2px solid var(--border); }
+        .table td { font-size: 14px; vertical-align: middle; border-color: var(--border); }
+        .table tbody tr:hover { background: rgba(37,99,235,0.04); }
+
+        /* Buttons */
+        .btn { font-weight: 600; border-radius: 8px; font-size: 14px; }
+        .btn-primary { background: var(--primary); border-color: var(--primary); }
+        .btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+
+        /* Forms */
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1.5px solid var(--border);
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text);
+            background: var(--card-bg);
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .form-label { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+
+        /* Badges */
+        .badge { font-size: 12px; padding: 5px 10px; border-radius: 6px; font-weight: 600; }
+
+        /* Toast Container */
+        .toast-container { position: fixed; top: 20px; left: 20px; z-index: 9999; }
+
+        /* Mobile */
+        .sidebar-toggle { display: none; }
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(100%); }
+            .sidebar.show { transform: translateX(0); }
+            .main-wrapper { margin-right: 0; }
+            .sidebar-toggle { display: flex; }
+            .sidebar-overlay {
+                display: none;
+                position: fixed; inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+            .sidebar-overlay.show { display: block; }
+        }
+        /* Loading screen */
+        #loading-screen {
+            position: fixed; inset: 0;
+            background: #1e293b;
+            display: flex; align-items: center; justify-content: center;
+            z-index: 99999;
+            transition: opacity 0.5s;
+        }
+        #loading-screen.fade-out { opacity: 0; pointer-events: none; }
+        .spinner-ring {
+            width: 60px; height: 60px;
+            border: 5px solid rgba(255,255,255,0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select { background: #1e293b; color: #f1f5f9; border-color: #334155; }
+        [data-theme="dark"] .table { color: #f1f5f9; }
+        [data-theme="dark"] .modal-content { background: #1e293b; color: #f1f5f9; }
+
+        .page-breadcrumb { font-size: 13px; color: var(--text-muted); }
+        .page-breadcrumb a { color: var(--primary); text-decoration: none; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body {% if theme == 'dark' %}data-theme="dark"{% endif %}>
+
+<!-- Loading Screen -->
+<div id="loading-screen">
+    <div class="text-center">
+        <div class="spinner-ring mx-auto mb-3"></div>
+        <p style="color: rgba(255,255,255,0.6); font-size:14px;">جاري التحميل...</p>
+    </div>
+</div>
+
+<!-- Sidebar Overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        {% if logo %}
+        <img src="{{ url_for('static', filename='images/uploads/' + logo) }}" alt="Logo">
+        {% else %}
+        <div style="width:50px;height:50px;background:var(--primary);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto;">
+            <i class="fas fa-bus" style="color:white;font-size:22px;"></i>
+        </div>
+        {% endif %}
+        <h6>{{ company_name or 'نظام النقل' }}</h6>
+        <small>Transport Management</small>
+        <small style="display:block; opacity:0.6;">برمجة: محمد ناصر عبدالله</small>
+    </div>
+
+    <div class="sidebar-nav">
+        <div class="nav-section-title">الرئيسية</div>
+        <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if request.endpoint == 'admin.dashboard' %}active{% endif %}">
+            <i class="fas fa-chart-pie"></i> لوحة التحكم
+        </a>
+
+        <div class="nav-section-title">الإدارة</div>
+        <a href="{{ url_for('admin.employees') }}" class="nav-link {% if 'employee' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-users"></i> الموظفون
+        </a>
+        <a href="{{ url_for('admin.buses') }}" class="nav-link {% if 'bus' in request.endpoint or 'station' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-bus"></i> خطوط السير
+        </a>
+        <a href="{{ url_for('admin.drivers') }}" class="nav-link {% if 'driver' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-id-badge"></i> السائقون
+        </a>
+        <a href="{{ url_for('admin.registrations') }}" class="nav-link {% if 'registration' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-clipboard-list"></i> سجلات التسجيل
+        </a>
+
+        <div class="nav-section-title">التقارير والسجلات</div>
+        <a href="{{ url_for('admin.reports') }}" class="nav-link {% if request.endpoint == 'admin.reports' %}active{% endif %}">
+            <i class="fas fa-chart-bar"></i> التقارير
+        </a>
+        <a href="{{ url_for('admin.login_logs') }}" class="nav-link {% if request.endpoint == 'admin.login_logs' %}active{% endif %}">
+            <i class="fas fa-sign-in-alt"></i> سجلات الدخول
+        </a>
+
+        <div class="nav-section-title">النظام</div>
+        <a href="{{ url_for('admin.settings') }}" class="nav-link {% if request.endpoint == 'admin.settings' %}active{% endif %}">
+            <i class="fas fa-cog"></i> الإعدادات
+        </a>
+        <a href="{{ url_for('admin.change_password') }}" class="nav-link {% if request.endpoint == 'admin.change_password' %}active{% endif %}">
+            <i class="fas fa-key"></i> تغيير كلمة المرور
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="nav-link text-danger">
+            <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+        </a>
+    </div>
+</nav>
+
+<!-- Main Wrapper -->
+<div class="main-wrapper">
+    <!-- Top Navbar -->
+    <div class="topnav">
+        <button class="btn btn-sm btn-light sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <div>
+            <h5 class="page-title">{% block page_title %}لوحة التحكم{% endblock %}</h5>
+            <div class="page-breadcrumb">
+                <a href="{{ url_for('admin.dashboard') }}">الرئيسية</a>
+                {% block breadcrumb %}{% endblock %}
+            </div>
+        </div>
+        <div class="ms-auto">
+            <button class="btn btn-sm btn-light" onclick="toggleTheme()" title="تغيير الثيم">
+                <i class="fas fa-moon" id="theme-icon"></i>
+            </button>
+            <div class="d-flex align-items-center gap-2">
+                <div style="width:35px;height:35px;background:var(--primary);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                    <i class="fas fa-user-shield" style="color:white;font-size:14px;"></i>
+                </div>
+                <div class="d-none d-md-block">
+                    <div style="font-size:13px;font-weight:600;">{{ current_user.username }}</div>
+                    <div style="font-size:11px;color:var(--text-muted);">مسئول النظام</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="toast-container">
+        {% for category, message in messages %}
+        <div class="toast show align-items-center text-white bg-{{ 'success' if category == 'success' else 'danger' if category == 'danger' else 'warning' if category == 'warning' else 'info' }} border-0 mb-2 animate__animated animate__slideInLeft"
+             role="alert" id="toast-{{ loop.index }}">
+            <div class="d-flex">
+                <div class="toast-body fw-semibold">
+                    <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' }} me-2"></i>
+                    {{ message }}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    <script>
+        setTimeout(() => document.querySelectorAll('.toast').forEach(t => t.remove()), 5000);
+    </script>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Content -->
+    <div class="content-area">
+        {% block content %}{% endblock %}
+    </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+    // Hide loading screen
+    window.addEventListener('load', () => {
+        const ls = document.getElementById('loading-screen');
+        ls.classList.add('fade-out');
+        setTimeout(() => ls.remove(), 500);
+    });
+
+    // Sidebar toggle
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('show');
+        document.getElementById('sidebarOverlay').classList.toggle('show');
+    }
+
+    // Theme toggle
+    function toggleTheme() {
+        const body = document.body;
+        const isDark = body.getAttribute('data-theme') === 'dark';
+        body.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        document.getElementById('theme-icon').className = isDark ? 'fas fa-moon' : 'fas fa-sun';
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+    }
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.body.setAttribute('data-theme', savedTheme);
+        document.getElementById('theme-icon').className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    // Delete confirmation
+    function confirmDelete(formId, name) {
+        Swal.fire({
+            title: 'هل أنت متأكد؟',
+            text: `سيتم حذف "${name}" نهائياً`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'نعم، احذف',
+            cancelButtonText: 'إلغاء',
+            customClass: { popup: 'rtl' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
+            }
+        });
+    }
+
+    // DataTables init helper
+    function initDataTable(id) {
+        $(`#${id}`).DataTable({
+            language: {
+                search: 'بحث:',
+                lengthMenu: 'عرض _MENU_ سجل',
+                info: 'عرض _START_ إلى _END_ من _TOTAL_ سجل',
+                infoEmpty: 'لا توجد سجلات',
+                zeroRecords: 'لا توجد نتائج',
+                paginate: { first: 'الأول', last: 'الأخير', next: 'التالي', previous: 'السابق' }
+            },
+            pageLength: 25,
+            order: [],
+            dom: 'lrtip'
+        });
+    }
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

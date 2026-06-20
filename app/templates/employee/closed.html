@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التسجيل مغلق</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .closed-card {
+            max-width: 440px; width: 100%;
+            background: white; border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center; padding: 50px 35px;
+        }
+        .closed-icon {
+            width: 90px; height: 90px;
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 25px;
+            box-shadow: 0 10px 30px rgba(249,115,22,0.3);
+            font-size: 38px; color: white;
+        }
+        h2 { font-weight: 800; color: #1e293b; font-size: 24px; }
+        p { color: #64748b; font-size: 15px; line-height: 1.8; }
+        .contact-box {
+            background: #f8fafc;
+            border: 1.5px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 18px;
+            margin: 20px 0;
+        }
+        .contact-box a {
+            font-size: 20px;
+            font-weight: 800;
+            color: #2563eb;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<div class="closed-card animate__animated animate__fadeIn">
+    <div class="closed-icon"><i class="fas fa-ban"></i></div>
+    <h2>التسجيل مغلق حالياً</h2>
+    <p>
+        {% if reason == 'wrong_time' %}
+        التسجيل متاح في وقت محدد فقط. يرجى المحاولة في الوقت المخصص.
+        {% elif reason == 'wrong_day' %}
+        اليوم الحالي ليس من أيام التسجيل المتاحة.
+        {% else %}
+        تم إغلاق التسجيل من قِبل المسئول.
+        {% endif %}
+    </p>
+    {% if contact_phone %}
+    <div class="contact-box">
+        <p class="mb-1" style="font-size:13px;color:#64748b;">للتواصل مع مسئول النقل:</p>
+        <a href="tel:{{ contact_phone }}">{{ contact_phone }}</a>
+    </div>
+    {% endif %}
+    <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-secondary mt-2">
+        <i class="fas fa-arrow-right me-2"></i>رجوع
+    </a>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ 'تعديل' if employee else 'إضافة' }} موظف{% endblock %}
+{% block page_title %}{{ 'تعديل' if employee else 'إضافة' }} موظف{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-8 col-lg-6">
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-user-{{ 'edit' if employee else 'plus' }} text-primary me-2"></i>
+        {{ 'تعديل بيانات' if employee else 'إضافة' }} موظف
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if not employee %}
+            <div class="mb-3">
+                <label class="form-label">الرقم العالمي <span class="text-danger">*</span></label>
+                <input type="text" name="global_id" class="form-control" maxlength="8" pattern="\d{8}"
+                       inputmode="numeric" placeholder="8 أرقام" required>
+            </div>
+            {% else %}
+            <div class="mb-3">
+                <label class="form-label">الرقم العالمي</label>
+                <input type="text" class="form-control" value="{{ employee.global_id }}" readonly disabled>
+            </div>
+            {% endif %}
+
+            <div class="mb-3">
+                <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control"
+                       value="{{ employee.name if employee else '' }}" required>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">القسم</label>
+                <input type="text" name="department" class="form-control"
+                       value="{{ employee.department if employee else '' }}">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">التابع</label>
+                <select name="affiliate" class="form-select">
+                    <option value="مكتب" {{ 'selected' if not employee or employee.affiliate == 'مكتب' }}>مكتب</option>
+                    <option value="CFI" {{ 'selected' if employee and employee.affiliate == 'CFI' }}>CFI</option>
+                </select>
+            </div>
+
+            {% if employee %}
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" name="is_active" id="isActive"
+                           {{ 'checked' if employee.is_active }}>
+                    <label class="form-check-label" for="isActive">نشط</label>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>حفظ
+                </button>
+                <a href="{{ url_for('admin.employees') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-2"></i>إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

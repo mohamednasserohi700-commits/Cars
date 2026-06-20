@@ -1,0 +1,57 @@
+{% extends 'admin/base.html' %}
+{% block title %}السائقون{% endblock %}
+{% block page_title %}إدارة السائقين{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="fas fa-id-badge text-primary"></i>
+        <span>قائمة السائقين</span>
+        <div class="ms-auto">
+            <a href="{{ url_for('admin.add_driver') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i>إضافة سائق
+            </a>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" id="driverTable">
+            <thead>
+                <tr><th>#</th><th>الاسم</th><th>رقم الهاتف</th><th>الخط الأساسي</th><th>الإجراءات</th></tr>
+            </thead>
+            <tbody>
+                {% for d in drivers %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ d.name }}</strong></td>
+                    <td><a href="tel:{{ d.phone }}">{{ d.phone }}</a></td>
+                    <td>
+                        {% for b in d.primary_buses %}
+                        <span class="badge bg-info">{{ b.name }}</span>
+                        {% else %}-{% endfor %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{{ url_for('admin.edit_driver', id=d.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <form method="POST" action="{{ url_for('admin.delete_driver', id=d.id) }}" id="del-drv-{{ d.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="confirmDelete('del-drv-{{ d.id }}', '{{ d.name }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">لا يوجد سائقون</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>$(document).ready(function(){ initDataTable('driverTable'); });</script>
+{% endblock %}

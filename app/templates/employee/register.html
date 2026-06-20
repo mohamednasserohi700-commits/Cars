@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل خط النقل</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e8f0fe 100%);
+            padding: 20px;
+        }
+        .reg-card {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .reg-header {
+            background: linear-gradient(135deg, #1e293b 0%, #2563eb 100%);
+            padding: 25px 30px;
+            color: white;
+        }
+        .reg-header h4 { font-weight: 800; margin: 0; }
+        .reg-header p { margin: 5px 0 0; opacity: 0.75; font-size: 13px; }
+        .employee-badge {
+            background: rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 12px 18px;
+            margin-top: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .emp-avatar {
+            width: 45px; height: 45px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .reg-body { padding: 28px; }
+        .form-control, .form-select {
+            border: 1.5px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 11px 14px;
+            font-size: 14px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #2563eb;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        }
+        .form-control:disabled, .form-control[readonly] {
+            background: #f8fafc;
+            color: #64748b;
+        }
+        .form-label { font-weight: 700; font-size: 14px; margin-bottom: 6px; color: #374151; }
+        .btn-submit {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(37,99,235,0.4);
+            color: white;
+        }
+        .section-divider {
+            border: none;
+            border-top: 1.5px dashed #e2e8f0;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="reg-card animate__animated animate__fadeIn">
+    <div class="reg-header">
+        <div class="d-flex align-items-center gap-3">
+            <div style="width:45px;height:45px;background:rgba(255,255,255,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                <i class="fas fa-bus" style="font-size:22px;"></i>
+            </div>
+            <div>
+                <h4>تسجيل خط النقل</h4>
+                <p>يرجى تعبئة البيانات المطلوبة</p>
+            </div>
+        </div>
+        <div class="employee-badge">
+            <div class="emp-avatar"><i class="fas fa-user"></i></div>
+            <div>
+                <div style="font-weight:700; font-size:15px;">{{ employee.name }}</div>
+                <div style="opacity:0.75; font-size:13px;">{{ employee.global_id }}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="reg-body">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ 'success' if cat == 'success' else 'danger' if cat == 'danger' else 'warning' }} rounded-3 mb-3">
+            {{ msg }}
+        </div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="regForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="row g-3">
+                <!-- Read-only fields -->
+                <div class="col-sm-6">
+                    <label class="form-label">الرقم العالمي</label>
+                    <input type="text" class="form-control" value="{{ employee.global_id }}" readonly>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">التابع</label>
+                    <select name="affiliate" class="form-select">
+                        <option value="مكتب" {{ 'selected' if employee.affiliate == 'مكتب' }}>مكتب</option>
+                        <option value="CFI" {{ 'selected' if employee.affiliate == 'CFI' }}>CFI</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">الاسم <span class="text-danger">*</span></label>
+                    <input type="text" name="employee_name" class="form-control"
+                           placeholder="أدخل اسمك الكامل" required
+                           value="{{ employee.name if employee.id and employee.name != employee.global_id else '' }}">
+                </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <div class="row g-3">
+                <!-- Bus -->
+                <div class="col-12">
+                    <label class="form-label">اسم خط السير <span class="text-danger">*</span></label>
+                    <select name="bus_id" id="busSelect" class="form-select" required onchange="loadStations()">
+                        <option value="">-- اختر الخط --</option>
+                        {% for bus in buses %}
+                        <option value="{{ bus.id }}"
+                                {% if bus.is_full() %}disabled style="color:#dc2626;"{% endif %}>
+                            {{ bus.name }}
+                            {% if bus.is_full() %}(ممتلئ){% else %}({{ bus.get_remaining_seats() }} مقعد){% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Station -->
+                <div class="col-12">
+                    <label class="form-label">محطة الركوب <span class="text-danger">*</span></label>
+                    <select name="station_id" id="stationSelect" class="form-select" required disabled>
+                        <option value="">-- اختر الخط أولاً --</option>
+                    </select>
+                </div>
+
+                <!-- Phone -->
+                <div class="col-sm-6">
+                    <label class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                    <input type="tel" name="phone" class="form-control" placeholder="05XXXXXXXX" required>
+                </div>
+
+                <!-- Shift -->
+                <div class="col-sm-6">
+                    <label class="form-label">الوردية <span class="text-danger">*</span></label>
+                    <select name="shift" class="form-select" required>
+                        <option value="">-- اختر الوردية --</option>
+                        <option value="وردية أولى">وردية أولى</option>
+                        <option value="وردية ثانية">وردية ثانية</option>
+                        <option value="وردية ثالثة">وردية ثالثة</option>
+                    </select>
+                </div>
+
+                <!-- Pickup time -->
+                <div class="col-sm-6">
+                    <label class="form-label">وقت الركوب من المحطة <span class="text-danger">*</span></label>
+                    <input type="time" name="pickup_time" class="form-control" required>
+                </div>
+
+                <!-- Date -->
+                <div class="col-12">
+                    <label class="form-label">يوم السفر <span class="text-danger">*</span></label>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <input type="number" id="travelDay" class="form-control text-center"
+                                   placeholder="اليوم" min="1" max="31" required
+                                   inputmode="numeric">
+                            <div class="form-text text-center" style="font-size:11px;">اليوم</div>
+                        </div>
+                        <div class="col-4">
+                            <input type="text" id="travelMonth" class="form-control text-center" disabled
+                                   value="{{ now.strftime('%m') if now else '' }}">
+                            <div class="form-text text-center" style="font-size:11px;">الشهر</div>
+                        </div>
+                        <div class="col-4">
+                            <input type="text" id="travelYear" class="form-control text-center" disabled
+                                   value="{{ now.strftime('%Y') if now else '' }}">
+                            <div class="form-text text-center" style="font-size:11px;">السنة</div>
+                        </div>
+                    </div>
+                    <input type="hidden" name="travel_date" id="travelDateHidden" required>
+                </div>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn-submit">
+                    <i class="fas fa-check-circle me-2"></i>تسجيل
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center mt-3">
+            <a href="{{ url_for('auth.logout') }}" class="text-muted small">
+                <i class="fas fa-sign-out-alt me-1"></i>تسجيل الخروج
+            </a>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    function loadStations() {
+        const busId = document.getElementById('busSelect').value;
+        const stationSelect = document.getElementById('stationSelect');
+        stationSelect.innerHTML = '<option value="">جاري التحميل...</option>';
+        stationSelect.disabled = true;
+
+        if (!busId) {
+            stationSelect.innerHTML = '<option value="">-- اختر الخط أولاً --</option>';
+            return;
+        }
+
+        fetch(`/employee/stations/${busId}`)
+            .then(r => r.json())
+            .then(data => {
+                stationSelect.innerHTML = '<option value="">-- اختر المحطة --</option>';
+                data.forEach(s => {
+                    stationSelect.innerHTML += `<option value="${s.id}">${s.name}</option>`;
+                });
+                stationSelect.disabled = false;
+            })
+            .catch(() => {
+                stationSelect.innerHTML = '<option value="">خطأ في التحميل</option>';
+            });
+    }
+
+    // Travel date: month & year are fixed to current month/year, employee must type the day
+    const dayInput = document.getElementById('travelDay');
+    const monthInput = document.getElementById('travelMonth');
+    const yearInput = document.getElementById('travelYear');
+    const hiddenDateInput = document.getElementById('travelDateHidden');
+
+    // Fallback in case the server didn't provide "now" for any reason
+    if (!monthInput.value || !yearInput.value) {
+        const fallbackNow = new Date();
+        monthInput.value = String(fallbackNow.getMonth() + 1).padStart(2, '0');
+        yearInput.value = String(fallbackNow.getFullYear());
+    }
+
+    function daysInMonth(month, year) {
+        return new Date(year, month, 0).getDate();
+    }
+
+    function updateHiddenDate() {
+        const day = parseInt(dayInput.value, 10);
+        const month = parseInt(monthInput.value, 10);
+        const year = parseInt(yearInput.value, 10);
+
+        if (day && month && year) {
+            const maxDay = daysInMonth(month, year);
+            if (day >= 1 && day <= maxDay) {
+                const dd = String(day).padStart(2, '0');
+                const mm = String(month).padStart(2, '0');
+                hiddenDateInput.value = `${year}-${mm}-${dd}`;
+                dayInput.setCustomValidity('');
+                return;
+            }
+        }
+        hiddenDateInput.value = '';
+    }
+
+    dayInput.addEventListener('input', updateHiddenDate);
+
+    // Validate the day on submit (covers month length, e.g. Feb has 28/29 days)
+    document.getElementById('regForm').addEventListener('submit', function (e) {
+        updateHiddenDate();
+        if (!hiddenDateInput.value) {
+            e.preventDefault();
+            const month = parseInt(monthInput.value, 10);
+            const year = parseInt(yearInput.value, 10);
+            const maxDay = daysInMonth(month, year);
+            dayInput.setCustomValidity(`يرجى إدخال يوم صحيح بين 1 و ${maxDay}`);
+            dayInput.reportValidity();
+        }
+    });
+</script>
+</body>
+</html>

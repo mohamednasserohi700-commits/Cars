@@ -1,0 +1,176 @@
+{% extends 'admin/base.html' %}
+{% block title %}لوحة التحكم{% endblock %}
+{% block page_title %}لوحة التحكم{% endblock %}
+
+{% block content %}
+<!-- Stats Row -->
+<div class="row g-4 mb-4">
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card animate__animated animate__fadeInUp" style="background:linear-gradient(135deg,#2563eb,#1d4ed8);">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="icon"><i class="fas fa-users"></i></div>
+            </div>
+            <div class="num">{{ stats.employees }}</div>
+            <div class="label">الموظفون النشطون</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card animate__animated animate__fadeInUp" style="background:linear-gradient(135deg,#16a34a,#15803d);animation-delay:0.1s">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="icon"><i class="fas fa-clipboard-list"></i></div>
+            </div>
+            <div class="num">{{ stats.today_registrations }}</div>
+            <div class="label">تسجيلات اليوم</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card animate__animated animate__fadeInUp" style="background:linear-gradient(135deg,#0891b2,#0e7490);animation-delay:0.2s">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="icon"><i class="fas fa-bus"></i></div>
+            </div>
+            <div class="num">{{ stats.buses }}</div>
+            <div class="label">خطوط السير</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card animate__animated animate__fadeInUp" style="background:linear-gradient(135deg,#7c3aed,#6d28d9);animation-delay:0.3s">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="icon"><i class="fas fa-id-badge"></i></div>
+            </div>
+            <div class="num">{{ stats.drivers }}</div>
+            <div class="label">السائقون</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card animate__animated animate__fadeInUp" style="background:linear-gradient(135deg,#dc2626,#b91c1c);animation-delay:0.4s">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="icon"><i class="fas fa-bus-slash"></i></div>
+            </div>
+            <div class="num">{{ stats.full_buses }}</div>
+            <div class="label">خطوط ممتلئة</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-lg-2">
+        <div class="stat-card animate__animated animate__fadeInUp" style="background:linear-gradient(135deg,#d97706,#b45309);animation-delay:0.5s">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <div class="icon"><i class="fas fa-database"></i></div>
+            </div>
+            <div class="num">{{ stats.total_registrations }}</div>
+            <div class="label">إجمالي التسجيلات</div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-chart-line text-primary me-2"></i>التسجيلات - آخر 7 أيام
+            </div>
+            <div class="card-body">
+                <canvas id="dailyChart" height="110"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fas fa-chart-pie text-success me-2"></i>التسجيلات حسب الوردية
+            </div>
+            <div class="card-body d-flex align-items-center">
+                <canvas id="shiftChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-bolt text-warning me-2"></i>إجراءات سريعة</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6 col-md-3">
+                        <a href="{{ url_for('admin.add_employee') }}" class="btn btn-outline-primary w-100 py-3">
+                            <i class="fas fa-user-plus d-block mb-2" style="font-size:22px;"></i>
+                            إضافة موظف
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a href="{{ url_for('admin.add_bus') }}" class="btn btn-outline-success w-100 py-3">
+                            <i class="fas fa-plus-circle d-block mb-2" style="font-size:22px;"></i>
+                            إضافة خط
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a href="{{ url_for('admin.registrations') }}" class="btn btn-outline-info w-100 py-3">
+                            <i class="fas fa-list d-block mb-2" style="font-size:22px;"></i>
+                            التسجيلات
+                        </a>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <a href="{{ url_for('admin.export_registrations') }}" class="btn btn-outline-warning w-100 py-3">
+                            <i class="fas fa-file-excel d-block mb-2" style="font-size:22px;"></i>
+                            تصدير Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+new Chart(dailyCtx, {
+    type: 'line',
+    data: {
+        labels: {{ daily_labels | tojson }},
+        datasets: [{
+            label: 'التسجيلات',
+            data: {{ daily_values | tojson }},
+            borderColor: '#2563eb',
+            backgroundColor: 'rgba(37,99,235,0.08)',
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#2563eb',
+            pointRadius: 5,
+            borderWidth: 2.5
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        }
+    }
+});
+
+const shiftData = {{ shift_data | tojson }};
+const shiftCtx = document.getElementById('shiftChart').getContext('2d');
+new Chart(shiftCtx, {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(shiftData).length ? Object.keys(shiftData) : ['لا توجد بيانات'],
+        datasets: [{
+            data: Object.keys(shiftData).length ? Object.values(shiftData) : [1],
+            backgroundColor: ['#2563eb', '#16a34a', '#d97706'],
+            borderWidth: 0,
+            hoverOffset: 8
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { position: 'bottom', labels: { font: { family: 'Cairo' } } }
+        },
+        cutout: '65%'
+    }
+});
+</script>
+{% endblock %}

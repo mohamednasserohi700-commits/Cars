@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - نظام النقل</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .login-card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+        }
+        .logo-wrap {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 10px 30px rgba(37,99,235,0.4);
+        }
+        .logo-wrap i { color: white; font-size: 35px; }
+        .system-title { color: white; font-size: 22px; font-weight: 800; text-align: center; }
+        .system-sub { color: rgba(255,255,255,0.5); font-size: 13px; text-align: center; margin-top: 4px; }
+        .user-type-btn {
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 14px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            color: white;
+            width: 100%;
+        }
+        .user-type-btn:hover, .user-type-btn.selected {
+            background: rgba(37,99,235,0.3);
+            border-color: #2563eb;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(37,99,235,0.3);
+        }
+        .user-type-btn i { font-size: 32px; display: block; margin-bottom: 8px; }
+        .user-type-btn span { font-size: 15px; font-weight: 700; }
+        .form-panel {
+            display: none;
+            animation: fadeInUp 0.3s ease;
+        }
+        .form-panel.active { display: block; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-control {
+            background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.15);
+            color: white;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 15px;
+            text-align: center;
+            letter-spacing: 3px;
+        }
+        .form-control::placeholder { color: rgba(255,255,255,0.4); letter-spacing: 0; }
+        .form-control:focus {
+            background: rgba(255,255,255,0.12);
+            border-color: #2563eb;
+            color: white;
+            box-shadow: 0 0 0 3px rgba(37,99,235,0.25);
+        }
+        .form-label { color: rgba(255,255,255,0.8); font-weight: 600; font-size: 14px; }
+        .btn-login {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 700;
+            color: white;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn-login:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 25px rgba(37,99,235,0.4);
+        }
+        .btn-back {
+            background: transparent;
+            border: 1.5px solid rgba(255,255,255,0.2);
+            color: rgba(255,255,255,0.7);
+            border-radius: 10px;
+            padding: 8px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-back:hover { background: rgba(255,255,255,0.08); color: white; }
+        .alert-msg {
+            background: rgba(220,38,38,0.15);
+            border: 1px solid rgba(220,38,38,0.3);
+            color: #fca5a5;
+            border-radius: 10px;
+            padding: 12px 16px;
+            font-size: 14px;
+        }
+        .divider {
+            height: 1px;
+            background: rgba(255,255,255,0.1);
+            margin: 25px 0;
+        }
+        .particles {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+        }
+        .login-card { position: relative; z-index: 1; }
+    </style>
+</head>
+<body>
+<div class="login-card animate__animated animate__fadeInDown">
+    <!-- Logo -->
+    <div class="logo-wrap">
+        <i class="fas fa-bus"></i>
+    </div>
+    <h1 class="system-title">نظام إدارة النقل</h1>
+    <p class="system-sub">Transport Management System</p>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    {% for category, message in messages %}
+    <div class="alert-msg mt-3 animate__animated animate__shakeX">
+        <i class="fas fa-exclamation-triangle me-2"></i>{{ message }}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    <div class="divider"></div>
+
+    <!-- User Type Selection -->
+    <div id="type-selection">
+        <p style="color:rgba(255,255,255,0.6); text-align:center; font-size:14px; margin-bottom:20px;">اختر نوع المستخدم</p>
+        <div class="row g-3">
+            <div class="col-6">
+                <button class="user-type-btn" onclick="showPanel('employee')">
+                    <i class="fas fa-user"></i>
+                    <span>موظف</span>
+                </button>
+            </div>
+            <div class="col-6">
+                <button class="user-type-btn" onclick="showPanel('admin')">
+                    <i class="fas fa-user-shield"></i>
+                    <span>مسئول النظام</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employee Login Panel -->
+    <div class="form-panel" id="panel-employee">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <button class="btn-back" onclick="showSelection()">
+                <i class="fas fa-arrow-right me-1"></i> رجوع
+            </button>
+            <span style="color:rgba(255,255,255,0.7); font-size:15px; font-weight:700;">
+                <i class="fas fa-user me-2"></i>تسجيل دخول الموظف
+            </span>
+        </div>
+        <form method="POST" action="{{ url_for('auth.employee_login') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-4">
+                <label class="form-label">الرقم العالمي</label>
+                <input type="text" name="global_id" id="global_id" class="form-control"
+                       placeholder="أدخل الرقم المكون من 8 أرقام"
+                       maxlength="8" pattern="\d{8}" inputmode="numeric"
+                       autocomplete="off" required>
+                <div class="mt-2" style="color:rgba(255,255,255,0.4);font-size:12px;text-align:center;">
+                    <i class="fas fa-info-circle me-1"></i>8 أرقام فقط
+                </div>
+            </div>
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>دخول
+            </button>
+        </form>
+    </div>
+
+    <!-- Admin Login Panel -->
+    <div class="form-panel" id="panel-admin">
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <button class="btn-back" onclick="showSelection()">
+                <i class="fas fa-arrow-right me-1"></i> رجوع
+            </button>
+            <span style="color:rgba(255,255,255,0.7); font-size:15px; font-weight:700;">
+                <i class="fas fa-user-shield me-2"></i>تسجيل دخول المسئول
+            </span>
+        </div>
+        <form method="POST" action="{{ url_for('auth.admin_login') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label class="form-label">اسم المستخدم</label>
+                <input type="text" name="username" class="form-control" placeholder="اسم المستخدم"
+                       style="text-align:right;letter-spacing:0;" required>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">كلمة المرور</label>
+                <input type="password" name="password" class="form-control" placeholder="••••••••"
+                       style="text-align:right;letter-spacing:0;" required>
+            </div>
+            <button type="submit" class="btn-login">
+                <i class="fas fa-sign-in-alt me-2"></i>دخول
+            </button>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    function showPanel(type) {
+        document.getElementById('type-selection').style.display = 'none';
+        document.getElementById('panel-' + type).classList.add('active');
+    }
+    function showSelection() {
+        document.getElementById('type-selection').style.display = 'block';
+        document.querySelectorAll('.form-panel').forEach(p => p.classList.remove('active'));
+    }
+
+    // Global ID: digits only
+    document.getElementById('global_id').addEventListener('input', function() {
+        this.value = this.value.replace(/\D/g, '').slice(0, 8);
+    });
+
+    // Auto-show panel if flash message exists
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    // Show employee panel on error
+    setTimeout(() => showPanel('employee'), 100);
+    {% endif %}
+    {% endwith %}
+</script>
+</body>
+</html>

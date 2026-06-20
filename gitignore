@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+*.db
+*.sqlite3
+instance/
+.webassets-cache
+venv/
+env/
+.venv/
+migrations/
+app/static/images/uploads/*
+!app/static/images/uploads/.gitkeep

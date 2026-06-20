@@ -1,0 +1,87 @@
+{% extends 'admin/base.html' %}
+{% block title %}تعديل التسجيل{% endblock %}
+{% block page_title %}تعديل التسجيل{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-lg-7">
+<div class="card">
+    <div class="card-header">
+        <i class="fas fa-edit text-primary me-2"></i>تعديل تسجيل: <strong>{{ reg.display_name }}</strong>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-info rounded-3 mb-4">
+            <i class="fas fa-info-circle me-2"></i>
+            الموظف: <strong>{{ reg.display_name }}</strong> &nbsp;|&nbsp;
+            الرقم العالمي: <code>{{ reg.display_global_id }}</code>
+        </div>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="row g-3">
+                <div class="col-sm-6">
+                    <label class="form-label">الخط</label>
+                    <select name="bus_id" id="busSelect" class="form-select" onchange="loadStations({{ reg.station_id }})">
+                        {% for b in buses %}
+                        <option value="{{ b.id }}" {{ 'selected' if b.id == reg.bus_id }}>{{ b.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">المحطة</label>
+                    <select name="station_id" id="stationSelect" class="form-select">
+                        <option value="{{ reg.station_id }}">{{ reg.station.name }}</option>
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">الوردية</label>
+                    <select name="shift" class="form-select">
+                        <option value="وردية أولى" {{ 'selected' if reg.shift == 'وردية أولى' }}>وردية أولى</option>
+                        <option value="وردية ثانية" {{ 'selected' if reg.shift == 'وردية ثانية' }}>وردية ثانية</option>
+                        <option value="وردية ثالثة" {{ 'selected' if reg.shift == 'وردية ثالثة' }}>وردية ثالثة</option>
+                    </select>
+                </div>
+                <div class="col-sm-6">
+                    <label class="form-label">رقم الهاتف</label>
+                    <input type="tel" name="phone" class="form-control" value="{{ reg.phone }}" required>
+                </div>
+                <div class="col-12">
+                    <label class="form-label">يوم السفر</label>
+                    <input type="date" name="travel_date" class="form-control"
+                           value="{{ reg.travel_date }}" required>
+                </div>
+            </div>
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-2"></i>حفظ التعديلات
+                </button>
+                <a href="{{ url_for('admin.registrations') }}" class="btn btn-outline-secondary">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function loadStations(selectedId) {
+    const busId = document.getElementById('busSelect').value;
+    fetch(`/employee/stations/${busId}`)
+        .then(r => r.json())
+        .then(data => {
+            const sel = document.getElementById('stationSelect');
+            sel.innerHTML = '';
+            data.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.id;
+                opt.textContent = s.name;
+                if (s.id == selectedId) opt.selected = true;
+                sel.appendChild(opt);
+            });
+        });
+}
+// Load stations on page load
+window.addEventListener('DOMContentLoaded', () => loadStations({{ reg.station_id }}));
+</script>
+{% endblock %}

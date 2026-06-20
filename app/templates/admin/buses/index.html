@@ -1,0 +1,90 @@
+{% extends 'admin/base.html' %}
+{% block title %}خطوط السير{% endblock %}
+{% block page_title %}إدارة خطوط السير{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ url_for('admin.add_bus') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>إضافة خط
+    </a>
+</div>
+<div class="row g-4">
+    {% for bus in buses %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h5 class="fw-bold mb-1">{{ bus.name }}</h5>
+                        <span class="badge {{ 'bg-success' if bus.is_active else 'bg-secondary' }}">
+                            {{ 'نشط' if bus.is_active else 'متوقف' }}
+                        </span>
+                    </div>
+                    <div style="width:50px;height:50px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                        <i class="fas fa-bus text-white" style="font-size:20px;"></i>
+                    </div>
+                </div>
+
+                <!-- Seats Progress -->
+                {% set remaining = bus.get_remaining_seats() %}
+                {% set used = bus.total_seats - remaining %}
+                {% set pct = ((used / bus.total_seats) * 100)|int if bus.total_seats > 0 else 0 %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <small class="text-muted">المقاعد المشغولة</small>
+                        <small><strong>{{ used }}/{{ bus.total_seats }}</strong></small>
+                    </div>
+                    <div class="progress" style="height:8px;border-radius:10px;">
+                        <div class="progress-bar {{ 'bg-danger' if pct >= 90 else 'bg-warning' if pct >= 70 else 'bg-success' }}"
+                             style="width:{{ pct }}%;border-radius:10px;"></div>
+                    </div>
+                    <small class="text-muted">{{ remaining }} مقعد متبقي</small>
+                </div>
+
+                {% if bus.primary_driver %}
+                <div class="mb-1 small">
+                    <i class="fas fa-user text-primary me-1"></i>
+                    <strong>السائق:</strong> {{ bus.primary_driver.name }} - {{ bus.primary_driver.phone }}
+                </div>
+                {% endif %}
+                {% if bus.backup_bus %}
+                <div class="mb-3 small">
+                    <i class="fas fa-exchange-alt text-warning me-1"></i>
+                    <strong>البديل:</strong> {{ bus.backup_bus.name }}
+                </div>
+                {% endif %}
+
+                <div class="d-flex gap-2 mt-3">
+                    <a href="{{ url_for('admin.bus_detail', id=bus.id) }}" class="btn btn-sm btn-outline-secondary flex-fill">
+                        <i class="fas fa-chart-bar me-1"></i>إحصائيات
+                    </a>
+                    <a href="{{ url_for('admin.stations', bus_id=bus.id) }}" class="btn btn-sm btn-outline-info flex-fill">
+                        <i class="fas fa-map-marker-alt me-1"></i>المحطات
+                    </a>
+                    <a href="{{ url_for('admin.edit_bus', id=bus.id) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <form method="POST" action="{{ url_for('admin.delete_bus', id=bus.id) }}" id="del-bus-{{ bus.id }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="confirmDelete('del-bus-{{ bus.id }}', '{{ bus.name }}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="col-12">
+        <div class="card p-5 text-center text-muted">
+            <i class="fas fa-bus-slash fa-3x mb-3 opacity-25"></i>
+            <p>لا توجد خطوط مضافة بعد</p>
+            <a href="{{ url_for('admin.add_bus') }}" class="btn btn-primary btn-sm mx-auto" style="width:fit-content;">
+                <i class="fas fa-plus me-2"></i>إضافة أول خط
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

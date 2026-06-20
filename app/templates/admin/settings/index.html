@@ -1,0 +1,135 @@
+{% extends 'admin/base.html' %}
+{% block title %}الإعدادات{% endblock %}
+{% block page_title %}إعدادات النظام{% endblock %}
+
+{% block content %}
+<form method="POST" enctype="multipart/form-data">
+<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="row g-4">
+    <!-- Registration Control -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="fas fa-toggle-on text-success me-2"></i>التسجيل</div>
+            <div class="card-body">
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="registration_open" id="regOpen"
+                           {{ 'checked' if settings.registration_open == '1' }} style="width:3em;height:1.5em;">
+                    <label class="form-check-label fw-bold" for="regOpen" style="font-size:16px;margin-right:10px;">
+                        فتح التسجيل
+                    </label>
+                </div>
+                <p class="text-muted small">عند الإغلاق لن يتمكن أي موظف من التسجيل</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Settings -->
+    <div class="col-md-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="fas fa-clock text-info me-2"></i>وقت التسجيل</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <label class="form-label">من</label>
+                        <input type="time" name="time_from" class="form-control"
+                               value="{{ settings.time_from }}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label">إلى</label>
+                        <input type="time" name="time_to" class="form-control"
+                               value="{{ settings.time_to }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Days -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-calendar-alt text-warning me-2"></i>أيام التسجيل المسموح بها</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% set days = [('0','الاثنين'),('1','الثلاثاء'),('2','الأربعاء'),('3','الخميس'),('4','الجمعة'),('5','السبت'),('6','الأحد')] %}
+                    {% for val, label in days %}
+                    <div class="col-6 col-md-3 col-lg-auto">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="allowed_days"
+                                   value="{{ val }}" id="day{{ val }}"
+                                   {{ 'checked' if val in settings.allowed_days }}>
+                            <label class="form-check-label" for="day{{ val }}">{{ label }}</label>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact & Company -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-phone text-primary me-2"></i>رقم مسئول النقل</div>
+            <div class="card-body">
+                <input type="tel" name="contact_phone" class="form-control"
+                       value="{{ settings.contact_phone }}" placeholder="05XXXXXXXX">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-building text-secondary me-2"></i>اسم الشركة</div>
+            <div class="card-body">
+                <input type="text" name="company_name" class="form-control"
+                       value="{{ settings.company_name }}" placeholder="اسم الشركة">
+            </div>
+        </div>
+    </div>
+
+    <!-- Logo & Theme -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-image text-danger me-2"></i>شعار الشركة</div>
+            <div class="card-body">
+                {% if settings.logo %}
+                <img src="{{ url_for('static', filename='images/uploads/' + settings.logo) }}"
+                     alt="Logo" class="mb-3" style="max-height:80px;">
+                {% endif %}
+                <input type="file" name="logo" class="form-control" accept="image/*">
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-palette text-purple me-2"></i>الثيم</div>
+            <div class="card-body">
+                <div class="d-flex gap-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="theme" value="light" id="themeLight"
+                               {{ 'checked' if settings.theme == 'light' }}>
+                        <label class="form-check-label" for="themeLight">
+                            <i class="fas fa-sun me-1"></i>فاتح
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="theme" value="dark" id="themeDark"
+                               {{ 'checked' if settings.theme == 'dark' }}>
+                        <label class="form-check-label" for="themeDark">
+                            <i class="fas fa-moon me-1"></i>داكن
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary btn-lg">
+            <i class="fas fa-save me-2"></i>حفظ الإعدادات
+        </button>
+    </div>
+</div>
+</form>
+{% endblock %}

@@ -1,0 +1,24 @@
+outerjoin(Employee): ✅ YES
+outerjoin: ✅ YES
+join(Employee): ✅ YES
+
+=== registrations() function ===
+def registrations():
+    q = request.args.get('q', '')
+    shift_f = request.args.get('shift', '')
+    date_f = request.args.get('date', '')
+    query = Registration.query.outerjoin(Employee).join(Bus)
+    if q:
+        query = query.filter(
+            (Employee.name.ilike(f'%{q}%')) | (Employee.global_id.ilike(f'%{q}%')) | (Registration.guest_global_id.ilike(f'%{q}%'))
+        )
+    if shift_f:
+        query = query.filter(Registration.shift == shift_f)
+    if date_f:
+        try:
+            d = datetime.strptime(date_f, '%Y-%m-%d').date()
+            query = query.filter(func.date(Registration.registration_date) == d)
+        except:
+            pass
+    regs = query.order_by(Registration.registration_date.desc()).all()
+    return render_template('admin/registrations/index.html', regis

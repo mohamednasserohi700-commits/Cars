@@ -1,0 +1,32 @@
+{% extends 'admin/base.html' %}
+{% block title %}{{ 'تعديل' if driver else 'إضافة' }} سائق{% endblock %}
+{% block page_title %}{{ 'تعديل' if driver else 'إضافة' }} سائق{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-6">
+<div class="card">
+    <div class="card-header"><i class="fas fa-id-badge text-primary me-2"></i>بيانات السائق</div>
+    <div class="card-body">
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label class="form-label">الاسم الكامل <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control"
+                       value="{{ driver.name if driver else '' }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">رقم الهاتف <span class="text-danger">*</span></label>
+                <input type="tel" name="phone" class="form-control"
+                       value="{{ driver.phone if driver else '' }}" required>
+            </div>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>حفظ</button>
+                <a href="{{ url_for('admin.drivers') }}" class="btn btn-outline-secondary">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
+</div>
+{% endblock %}

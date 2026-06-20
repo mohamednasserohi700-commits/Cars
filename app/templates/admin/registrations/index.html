@@ -1,0 +1,95 @@
+{% extends 'admin/base.html' %}
+{% block title %}سجلات التسجيل{% endblock %}
+{% block page_title %}سجلات التسجيل{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex flex-wrap align-items-center gap-2">
+        <i class="fas fa-clipboard-list text-primary"></i>
+        <span>جميع التسجيلات</span>
+        <span class="badge bg-primary">{{ registrations|length }}</span>
+        <div class="ms-auto d-flex flex-wrap gap-2">
+            <form method="GET" class="d-flex flex-wrap gap-2">
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="بحث..." style="width:160px;">
+                <select name="shift" class="form-select form-select-sm" style="width:140px;">
+                    <option value="">كل الورديات</option>
+                    <option value="وردية أولى" {{ 'selected' if shift_f == 'وردية أولى' }}>وردية أولى</option>
+                    <option value="وردية ثانية" {{ 'selected' if shift_f == 'وردية ثانية' }}>وردية ثانية</option>
+                    <option value="وردية ثالثة" {{ 'selected' if shift_f == 'وردية ثالثة' }}>وردية ثالثة</option>
+                </select>
+                <input type="date" name="date" value="{{ date_f }}" class="form-control form-control-sm" style="width:160px;">
+                <button class="btn btn-sm btn-outline-secondary">تصفية</button>
+            </form>
+            <a href="{{ url_for('admin.export_registrations') }}" class="btn btn-sm btn-outline-success">
+                <i class="fas fa-file-excel me-1"></i>Excel
+            </a>
+            <a href="{{ url_for('admin.export_registrations_pdf') }}" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-file-pdf me-1"></i>PDF
+            </a>
+            <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-print me-1"></i>طباعة
+            </button>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0" id="regTable">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الاسم</th>
+                    <th>الرقم العالمي</th>
+                    <th>الخط</th>
+                    <th>المحطة</th>
+                    <th>الوردية</th>
+                    <th>وقت الركوب</th>
+                    <th>يوم السفر</th>
+                    <th>وقت التسجيل</th>
+                    <th>الهاتف</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in registrations %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td><strong>{{ r.employee.name }}</strong></td>
+                    <td><code>{{ r.employee.global_id }}</code></td>
+                    <td>{{ r.bus.name }}</td>
+                    <td>{{ r.station.name }}</td>
+                    <td>
+                        <span class="badge {{ 'bg-primary' if r.shift == 'وردية أولى' else 'bg-success' if r.shift == 'وردية ثانية' else 'bg-warning' }}">
+                            {{ r.shift }}
+                        </span>
+                    </td>
+                    <td>{{ r.pickup_time or '-' }}</td>
+                    <td>{{ r.travel_date }}</td>
+                    <td>
+                        <small>{{ r.registration_date.strftime('%Y-%m-%d') }}<br>{{ r.registration_date.strftime('%H:%M') }}</small>
+                    </td>
+                    <td>{{ r.phone }}</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                                <a href="{{ url_for('admin.edit_registration', id=r.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('admin.delete_registration', id=r.id) }}" id="del-reg-{{ r.id }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmDelete('del-reg-{{ r.id }}', 'تسجيل {{ r.employee.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="11" class="text-center text-muted py-4">لا توجد تسجيلات</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>$(document).ready(function(){ initDataTable('regTable'); });</script>
+{% endblock %}

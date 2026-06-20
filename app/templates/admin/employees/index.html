@@ -1,0 +1,116 @@
+{% extends 'admin/base.html' %}
+{% block title %}الموظفون{% endblock %}
+{% block page_title %}إدارة الموظفين{% endblock %}
+{% block breadcrumb %} / <span>الموظفون</span>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex align-items-center gap-3 flex-wrap">
+        <i class="fas fa-users text-primary"></i>
+        <span>قائمة الموظفين</span>
+        <span class="badge bg-primary ms-1">{{ employees|length }}</span>
+        <div class="ms-auto d-flex gap-2 flex-wrap">
+            <!-- Search -->
+            <form method="GET" class="d-flex gap-2">
+                <input type="text" name="q" value="{{ q }}" class="form-control form-control-sm" placeholder="بحث..." style="width:180px;">
+                <button class="btn btn-sm btn-outline-secondary">بحث</button>
+            </form>
+            <!-- Import -->
+            <button class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#importModal">
+                <i class="fas fa-file-excel me-1"></i>استيراد
+            </button>
+            <!-- Export -->
+            <a href="{{ url_for('admin.export_employees') }}" class="btn btn-sm btn-outline-info">
+                <i class="fas fa-file-excel me-1"></i>Excel
+            </a>
+            <a href="{{ url_for('admin.export_employees_pdf') }}" class="btn btn-sm btn-outline-danger">
+                <i class="fas fa-file-pdf me-1"></i>PDF
+            </a>
+            <!-- Add -->
+            <a href="{{ url_for('admin.add_employee') }}" class="btn btn-sm btn-primary">
+                <i class="fas fa-plus me-1"></i>إضافة موظف
+            </a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="empTable">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الرقم العالمي</th>
+                        <th>الاسم</th>
+                        <th>القسم</th>
+                        <th>التابع</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td><code>{{ emp.global_id }}</code></td>
+                        <td><strong>{{ emp.name }}</strong></td>
+                        <td>{{ emp.department or '-' }}</td>
+                        <td>
+                            <span class="badge {{ 'bg-primary' if emp.affiliate == 'مكتب' else 'bg-secondary' }}">
+                                {{ emp.affiliate }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="badge {{ 'bg-success' if emp.is_active else 'bg-danger' }}">
+                                {{ 'نشط' if emp.is_active else 'غير نشط' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1">
+                                <a href="{{ url_for('admin.edit_employee', id=emp.id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="POST" action="{{ url_for('admin.delete_employee', id=emp.id) }}" id="del-emp-{{ emp.id }}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="button" class="btn btn-sm btn-outline-danger"
+                                            onclick="confirmDelete('del-emp-{{ emp.id }}', '{{ emp.name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="7" class="text-center py-4 text-muted">لا يوجد موظفون</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">استيراد من Excel</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('admin.import_employees') }}" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <p class="text-muted small">يجب أن يحتوي الملف على الأعمدة: الرقم العالمي، الاسم، القسم، التابع</p>
+                    <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">استيراد</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>$(document).ready(function(){ initDataTable('empTable'); });</script>
+{% endblock %}

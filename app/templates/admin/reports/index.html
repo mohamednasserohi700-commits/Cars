@@ -1,0 +1,88 @@
+{% extends 'admin/base.html' %}
+{% block title %}التقارير{% endblock %}
+{% block page_title %}التقارير{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-bus text-primary me-2"></i>التسجيلات حسب الخط</div>
+            <div class="card-body">
+                <canvas id="busChart" height="200"></canvas>
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm">
+                        <thead><tr><th>الخط</th><th>عدد التسجيلات</th></tr></thead>
+                        <tbody>
+                            {% for name, count in bus_stats %}
+                            <tr><td>{{ name }}</td><td><span class="badge bg-primary">{{ count }}</span></td></tr>
+                            {% else %}
+                            <tr><td colspan="2" class="text-center text-muted">لا توجد بيانات</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-clock text-success me-2"></i>التسجيلات حسب الوردية</div>
+            <div class="card-body">
+                <canvas id="shiftChart2" height="200"></canvas>
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm">
+                        <thead><tr><th>الوردية</th><th>عدد التسجيلات</th></tr></thead>
+                        <tbody>
+                            {% for shift, count in shift_stats %}
+                            <tr><td>{{ shift }}</td><td><span class="badge bg-success">{{ count }}</span></td></tr>
+                            {% else %}
+                            <tr><td colspan="2" class="text-center text-muted">لا توجد بيانات</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body d-flex gap-3 flex-wrap">
+                <a href="{{ url_for('admin.export_registrations') }}" class="btn btn-success">
+                    <i class="fas fa-file-excel me-2"></i>تصدير كل التسجيلات Excel
+                </a>
+                <button onclick="window.print()" class="btn btn-outline-secondary">
+                    <i class="fas fa-print me-2"></i>طباعة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const busLabels = {{ bus_stats | map(attribute=0) | list | tojson }};
+const busData = {{ bus_stats | map(attribute=1) | list | tojson }};
+new Chart(document.getElementById('busChart'), {
+    type: 'bar',
+    data: {
+        labels: busLabels.length ? busLabels : ['لا توجد بيانات'],
+        datasets: [{ label: 'تسجيلات', data: busData.length ? busData : [0],
+            backgroundColor: 'rgba(37,99,235,0.7)', borderRadius: 8 }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+});
+
+const shiftLabels = {{ shift_stats | map(attribute=0) | list | tojson }};
+const shiftData2 = {{ shift_stats | map(attribute=1) | list | tojson }};
+new Chart(document.getElementById('shiftChart2'), {
+    type: 'pie',
+    data: {
+        labels: shiftLabels.length ? shiftLabels : ['لا توجد بيانات'],
+        datasets: [{ data: shiftData2.length ? shiftData2 : [1],
+            backgroundColor: ['#2563eb','#16a34a','#d97706'], borderWidth: 0 }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { font: { family: 'Cairo' } } } } }
+});
+</script>
+{% endblock %}
