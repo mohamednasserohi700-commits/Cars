@@ -3,9 +3,10 @@ from flask_login import login_required, current_user
 from datetime import datetime, date
 from sqlalchemy import func
 import io
+import json
 import openpyxl
 from app import db
-from app.models import Employee, Bus, Station, Driver, Registration, LoginLog, Settings
+from app.models import Employee, Bus, Station, Driver, Registration, LoginLog, Settings, Admin
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -507,6 +508,133 @@ def settings():
         'logo': Settings.get('logo', ''),
     }
     return render_template('admin/settings/index.html', settings=current_settings)
+
+
+# ─── FULL DATABASE BACKUP (EXPORT / IMPORT) ────────────────────────────────────
+
+# Order matters: parents before children, to respect foreign key dependencies
+# on both export (for readability) and import (so FKs resolve correctly).
+BACKUP_MODELS = [
+    ('admins', Admin, ['id', 'username', 'password_hash', 'created_at']),
+    ('drivers', Driver, ['id', 'name', 'phone', 'created_at']),
+    ('employees', Employee, ['id', 'global_id', 'name', 'department', 'affiliate',
+                              'is_active', 'created_at', 'updated_at']),
+    ('buses', Bus, ['id', 'name', 'total_seats', 'is_active', 'driver_id',
+                     'backup_driver_id', 'backup_bus_id', 'created_at']),
+    ('stations', Station, ['id', 'name', 'bus_id', 'order', 'created_at']),
+    ('registrations', Registration, ['id', 'employee_id', 'guest_global_id', 'employee_name',
+                                      'bus_id', 'station_id', 'shift', 'phone', 'pickup_time',
+                                      'travel_date', 'registration_date', 'affiliate']),
+    ('login_logs', LoginLog, ['id', 'employee_id', 'global_id', 'ip_address', 'device_type',
+                               'browser', 'status', 'login_time']),
+    ('settings', Settings, ['id', 'key', 'value', 'updated_at']),
+]
+
+BACKUP_FORMAT_VERSION = 1
+
+
+def _serialize_value(value):
+    """Convert a column value into something JSON-safe, preserving type info."""
+    if isinstance(value, datetime):
+        return {'__type__': 'datetime', 'value': value.isoformat()}
+    if isinstance(value, date):
+        return {'__type__': 'date', 'value': value.isoformat()}
+    return value
+
+
+def _deserialize_value(value):
+    """Reverse of _serialize_value."""
+    if isinstance(value, dict) and '__type__' in value:
+        if value['__type__'] == 'datetime':
+            return datetime.fromisoformat(value['value'])
+        if value['__type__'] == 'date':
+            return date.fromisoformat(value['value'])
+    return value
+
+
+@admin_bp.route('/settings/backup/export')
+@login_required
+def export_full_backup():
+    """Export every table in the database into a single accurate JSON file."""
+    backup = {
+        'format_version': BACKUP_FORMAT_VERSION,
+        'exported_at': datetime.now().isoformat(),
+        'tables': {}
+    }
+
+    for table_name, model, columns in BACKUP_MODELS:
+        rows = []
+        for record in model.query.order_by(model.id).all():
+            row = {col: _serialize_value(getattr(record, col)) for col in columns}
+            rows.append(row)
+        backup['tables'][table_name] = rows
+
+    json_bytes = json.dumps(backup, ensure_ascii=False, indent=2).encode('utf-8')
+    buffer = io.BytesIO(json_bytes)
+    buffer.seek(0)
+
+    filename = f"backup_{datetime.now().strftime('%Y-%m-%d_%H-%M')}.json"
+    return send_file(buffer, as_attachment=True, download_name=filename,
+                      mimetype='application/json')
+
+
+@admin_bp.route('/settings/backup/import', methods=['POST'])
+@login_required
+def import_full_backup():
+    """Restore the database from a backup JSON file produced by export_full_backup.
+
+    mode = 'replace' -> wipe all tables then insert the backup data (exact restore)
+    mode = 'merge'    -> keep existing data, only add rows whose primary key
+                          does not already exist in each table
+    """
+    file = request.files.get('backup_file')
+    mode = request.form.get('import_mode', 'merge')
+
+    if not file or not file.filename:
+        flash('يرجى اختيار ملف النسخة الاحتياطية.', 'danger')
+        return redirect(url_for('admin.settings'))
+
+    try:
+        data = json.load(file.stream)
+    except Exception:
+        flash('الملف غير صالح أو تالف. يرجى اختيار ملف نسخة احتياطية صحيح (JSON).', 'danger')
+        return redirect(url_for('admin.settings'))
+
+    if 'tables' not in data:
+        flash('صيغة الملف غير معروفة. تأكد أنه ملف نسخة احتياطية تم تصديره من هذا النظام.', 'danger')
+        return redirect(url_for('admin.settings'))
+
+    tables = data['tables']
+
+    try:
+        if mode == 'replace':
+            # Delete in reverse dependency order to avoid FK violations
+            for table_name, model, _ in reversed(BACKUP_MODELS):
+                model.query.delete()
+            db.session.flush()
+
+            for table_name, model, columns in BACKUP_MODELS:
+                for row in tables.get(table_name, []):
+                    kwargs = {col: _deserialize_value(row.get(col)) for col in columns}
+                    db.session.add(model(**kwargs))
+        else:
+            # Merge: only insert rows whose id doesn't already exist
+            for table_name, model, columns in BACKUP_MODELS:
+                existing_ids = {row_id for (row_id,) in db.session.query(model.id).all()}
+                for row in tables.get(table_name, []):
+                    if row.get('id') in existing_ids:
+                        continue
+                    kwargs = {col: _deserialize_value(row.get(col)) for col in columns}
+                    db.session.add(model(**kwargs))
+
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        flash(f'حدث خطأ أثناء الاستيراد، تم التراجع عن أي تغييرات: {e}', 'danger')
+        return redirect(url_for('admin.settings'))
+
+    flash('تم استيراد النسخة الاحتياطية بنجاح.', 'success')
+    return redirect(url_for('admin.settings'))
 
 
 # ─── REPORTS ─────────────────────────────────────────────────────────────────
