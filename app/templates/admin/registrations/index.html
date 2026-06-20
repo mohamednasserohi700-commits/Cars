@@ -3,6 +3,29 @@
 {% block page_title %}سجلات التسجيل{% endblock %}
 
 {% block content %}
+
+{% if line_stats %}
+<div class="card mb-3">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="fas fa-chart-bar text-primary"></i>
+        <span>عدد التسجيلات حسب الخط</span>
+        <span class="text-muted small">{{ '(حسب الفلتر المطبق)' if (q or shift_f or date_f) else '' }}</span>
+    </div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-2">
+            {% for line_name, count in line_stats %}
+            <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-3"
+                 style="background:var(--bs-tertiary-bg, #f1f5f9); border:1px solid rgba(0,0,0,0.06);">
+                <i class="fas fa-bus text-primary"></i>
+                <span class="fw-semibold">{{ line_name }}</span>
+                <span class="badge bg-primary rounded-pill">{{ count }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="card">
     <div class="card-header d-flex flex-wrap align-items-center gap-2">
         <i class="fas fa-clipboard-list text-primary"></i>
@@ -29,6 +52,17 @@
             <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
                 <i class="fas fa-print me-1"></i>طباعة
             </button>
+            {% if registrations %}
+            <form method="POST" action="{{ url_for('admin.delete_all_registrations') }}" id="deleteAllRegsForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="q" value="{{ q }}">
+                <input type="hidden" name="shift" value="{{ shift_f }}">
+                <input type="hidden" name="date" value="{{ date_f }}">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteAllRegs()">
+                    <i class="fas fa-trash-alt me-1"></i>حذف الكل
+                </button>
+            </form>
+            {% endif %}
         </div>
     </div>
     <div class="table-responsive">
@@ -91,5 +125,31 @@
 </div>
 {% endblock %}
 {% block extra_js %}
-<script>$(document).ready(function(){ initDataTable('regTable'); });</script>
+<script>
+    $(document).ready(function(){ initDataTable('regTable'); });
+
+    function confirmDeleteAllRegs() {
+        const hasFilter = {{ 'true' if (q or shift_f or date_f) else 'false' }};
+        const count = {{ registrations|length }};
+        const text = hasFilter
+            ? `سيتم حذف ${count} تسجيل (حسب الفلتر المطبق حالياً فقط) نهائياً ولا يمكن التراجع عن هذا الإجراء.`
+            : `سيتم حذف جميع التسجيلات (${count} تسجيل) نهائياً ولا يمكن التراجع عن هذا الإجراء.`;
+
+        Swal.fire({
+            title: 'حذف التسجيلات؟',
+            text: text,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'نعم، احذف',
+            cancelButtonText: 'إلغاء',
+            customClass: { popup: 'rtl' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteAllRegsForm').submit();
+            }
+        });
+    }
+</script>
 {% endblock %}
