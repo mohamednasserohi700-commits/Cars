@@ -132,4 +132,80 @@
     </div>
 </div>
 </form>
+
+<!-- Full Database Backup -->
+<div class="row g-4 mt-1">
+    <div class="col-12">
+        <div class="card border-primary">
+            <div class="card-header bg-primary bg-opacity-10">
+                <i class="fas fa-database text-primary me-2"></i>
+                <strong>نسخ احتياطي كامل لقاعدة البيانات</strong>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-4">
+                    يشمل النسخ الاحتياطي جميع البيانات: الموظفين، خطوط السير، المحطات، السائقين،
+                    سجلات التسجيل، سجلات الدخول، الإعدادات، وحسابات الإدارة. يُنصح بأخذ نسخة احتياطية
+                    دورياً وقبل أي تعديل كبير على النظام.
+                </p>
+
+                <div class="row g-4">
+                    <!-- Export -->
+                    <div class="col-md-6">
+                        <h6 class="mb-2"><i class="fas fa-download text-success me-1"></i>تصدير نسخة احتياطية</h6>
+                        <p class="text-muted small">يقوم بتنزيل ملف يحتوي على نسخة كاملة ودقيقة من قاعدة البيانات الحالية.</p>
+                        <a href="{{ url_for('admin.export_full_backup') }}" class="btn btn-success">
+                            <i class="fas fa-file-download me-2"></i>تنزيل نسخة احتياطية الآن
+                        </a>
+                    </div>
+
+                    <!-- Import -->
+                    <div class="col-md-6">
+                        <h6 class="mb-2"><i class="fas fa-upload text-danger me-1"></i>استيراد نسخة احتياطية</h6>
+                        <form method="POST" action="{{ url_for('admin.import_full_backup') }}"
+                              enctype="multipart/form-data"
+                              onsubmit="return confirmBackupImport(this);">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <div class="mb-3">
+                                <input type="file" name="backup_file" class="form-control" accept=".json" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">طريقة الاستيراد</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="import_mode"
+                                           value="merge" id="modeMerge" checked>
+                                    <label class="form-check-label small" for="modeMerge">
+                                        <strong>دمج</strong> — إضافة البيانات الجديدة فقط، مع الإبقاء على البيانات الحالية
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="import_mode"
+                                           value="replace" id="modeReplace">
+                                    <label class="form-check-label small" for="modeReplace">
+                                        <strong class="text-danger">استبدال كامل</strong> — حذف جميع البيانات الحالية واستعادة الملف بالكامل
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-file-upload me-2"></i>استيراد الآن
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmBackupImport(form) {
+    const mode = form.querySelector('input[name="import_mode"]:checked').value;
+    if (mode === 'replace') {
+        return confirm('تحذير: سيتم حذف جميع البيانات الحالية نهائياً واستبدالها بمحتوى الملف. هل أنت متأكد من المتابعة؟');
+    }
+    return confirm('سيتم إضافة بيانات الملف إلى البيانات الحالية. هل تريد المتابعة؟');
+}
+</script>
 {% endblock %}
