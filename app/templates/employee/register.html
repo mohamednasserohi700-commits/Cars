@@ -151,11 +151,13 @@
                     <select name="bus_id" id="busSelect" class="form-select" required onchange="loadStations()">
                         <option value="">-- اختر الخط --</option>
                         {% for bus in buses %}
+                        {% if bus.is_available %}
                         <option value="{{ bus.id }}"
                                 {% if bus.is_full() %}disabled style="color:#dc2626;"{% endif %}>
                             {{ bus.name }}
                             {% if bus.is_full() %}(ممتلئ){% else %}({{ bus.get_remaining_seats() }} مقعد){% endif %}
                         </option>
+                        {% endif %}
                         {% endfor %}
                     </select>
                 </div>
