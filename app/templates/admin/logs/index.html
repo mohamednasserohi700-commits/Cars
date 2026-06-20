@@ -8,10 +8,18 @@
         <i class="fas fa-sign-in-alt text-primary"></i>
         <span>سجلات دخول الموظفين</span>
         <span class="badge bg-primary ms-1">{{ logs|length }}</span>
-        <div class="ms-auto">
+        <div class="ms-auto d-flex gap-2">
             <button onclick="window.print()" class="btn btn-sm btn-outline-secondary">
                 <i class="fas fa-print me-1"></i>طباعة
             </button>
+            {% if logs %}
+            <form method="POST" action="{{ url_for('admin.delete_all_login_logs') }}" id="deleteAllLogsForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDeleteAllLogs()">
+                    <i class="fas fa-trash-alt me-1"></i>حذف جميع السجلات
+                </button>
+            </form>
+            {% endif %}
         </div>
     </div>
     <div class="table-responsive">
@@ -58,5 +66,25 @@
 </div>
 {% endblock %}
 {% block extra_js %}
-<script>$(document).ready(function(){ initDataTable('logTable'); });</script>
+<script>
+    $(document).ready(function(){ initDataTable('logTable'); });
+
+    function confirmDeleteAllLogs() {
+        Swal.fire({
+            title: 'حذف جميع سجلات الدخول؟',
+            text: 'سيتم حذف جميع سجلات الدخول الموجودة في النظام نهائياً (وليس فقط المعروضة في هذه الصفحة)، ولا يمكن التراجع عن هذا الإجراء.',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'نعم، احذف الكل',
+            cancelButtonText: 'إلغاء',
+            customClass: { popup: 'rtl' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteAllLogsForm').submit();
+            }
+        });
+    }
+</script>
 {% endblock %}
