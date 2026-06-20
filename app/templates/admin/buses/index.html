@@ -20,8 +20,23 @@
                             {{ 'نشط' if bus.is_active else 'متوقف' }}
                         </span>
                     </div>
-                    <div style="width:50px;height:50px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:12px;display:flex;align-items:center;justify-content:center;">
-                        <i class="fas fa-bus text-white" style="font-size:20px;"></i>
+                    <div class="d-flex flex-column align-items-end gap-2">
+                        <div style="width:50px;height:50px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+                            <i class="fas fa-bus text-white" style="font-size:20px;"></i>
+                        </div>
+                        <!-- Toggle availability -->
+                        <form method="POST" action="{{ url_for('admin.toggle_bus_availability', id=bus.id) }}" class="d-flex align-items-center gap-1">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <label class="form-check-label small fw-semibold {{ 'text-success' if bus.is_available else 'text-danger' }}" style="cursor:pointer;" onclick="this.closest('form').submit()">
+                                {{ 'متاح' if bus.is_available else 'غير متاح' }}
+                            </label>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                       style="cursor:pointer; width:2.2em; height:1.2em;"
+                                       {{ 'checked' if bus.is_available }}
+                                       onchange="this.closest('form').submit()">
+                            </div>
+                        </form>
                     </div>
                 </div>
 
