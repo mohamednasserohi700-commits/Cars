@@ -1,0 +1,165 @@
+{% extends 'admin/base.html' %}
+{% block title %}تفاصيل: {{ bus.name }}{% endblock %}
+{% block page_title %}تفاصيل الخط: {{ bus.name }}{% endblock %}
+{% block breadcrumb %} / <a href="{{ url_for('admin.buses') }}">الخطوط</a> / <span>{{ bus.name }}</span>{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+    <!-- Bus Info -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><i class="fas fa-bus text-primary me-2"></i>بيانات الخط</div>
+            <div class="card-body">
+                {% set remaining = bus.get_remaining_seats() %}
+                {% set used = bus.total_seats - remaining %}
+                {% set pct = ((used / bus.total_seats) * 100)|int if bus.total_seats > 0 else 0 %}
+
+                <div class="text-center mb-4">
+                    <div style="position:relative;width:120px;height:120px;margin:0 auto;">
+                        <canvas id="seatsDonut"></canvas>
+                        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;">
+                            <div style="font-size:24px;font-weight:800;color:var(--text);">{{ remaining }}</div>
+                            <div style="font-size:11px;color:var(--text-muted);">متبقي</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-list">
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color:var(--border)!important;">
+                        <span class="text-muted">إجمالي المقاعد</span>
+                        <strong>{{ bus.total_seats }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color:var(--border)!important;">
+                        <span class="text-muted">مشغول اليوم</span>
+                        <strong class="text-danger">{{ used }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color:var(--border)!important;">
+                        <span class="text-muted">المتبقية</span>
+                        <strong class="text-success">{{ remaining }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color:var(--border)!important;">
+                        <span class="text-muted">الحالة</span>
+                        <span class="badge {{ 'bg-danger' if bus.is_full() else 'bg-success' }}">
+                            {{ 'ممتلئ' if bus.is_full() else 'متاح' }}
+                        </span>
+                    </div>
+                    {% if bus.primary_driver %}
+                    <div class="d-flex justify-content-between py-2 border-bottom" style="border-color:var(--border)!important;">
+                        <span class="text-muted">السائق</span>
+                        <strong>{{ bus.primary_driver.name }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted">هاتف السائق</span>
+                        <a href="tel:{{ bus.primary_driver.phone }}">{{ bus.primary_driver.phone }}</a>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a href="{{ url_for('admin.edit_bus', id=bus.id) }}" class="btn btn-sm btn-outline-primary flex-fill">
+                        <i class="fas fa-edit me-1"></i>تعديل
+                    </a>
+                    <a href="{{ url_for('admin.stations', bus_id=bus.id) }}" class="btn btn-sm btn-outline-info flex-fill">
+                        <i class="fas fa-map-marker-alt me-1"></i>المحطات
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stations -->
+        <div class="card mt-4">
+            <div class="card-header"><i class="fas fa-map-marker-alt text-info me-2"></i>المحطات</div>
+            <div class="list-group list-group-flush">
+                {% for s in bus.stations.order_by('order').all() %}
+                <div class="list-group-item" style="background:transparent;border-color:var(--border);color:var(--text);">
+                    <i class="fas fa-circle text-primary me-2" style="font-size:8px;"></i>{{ s.name }}
+                </div>
+                {% else %}
+                <div class="list-group-item text-muted" style="background:transparent;">لا توجد محطات</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Registrations -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <i class="fas fa-clipboard-list text-primary"></i>
+                <span>تسجيلات اليوم</span>
+                <span class="badge bg-primary ms-1">{{ today_regs|length }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr><th>الاسم</th><th>الرقم العالمي</th><th>المحطة</th><th>الوردية</th><th>الهاتف</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in today_regs %}
+                        <tr>
+                            <td><strong>{{ r.display_name }}</strong></td>
+                            <td><code>{{ r.display_global_id }}</code></td>
+                            <td>{{ r.station.name }}</td>
+                            <td><span class="badge bg-primary">{{ r.shift }}</span></td>
+                            <td>{{ r.phone }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="5" class="text-center text-muted py-4">لا توجد تسجيلات اليوم</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if all_regs %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="fas fa-history text-secondary me-2"></i>آخر 50 تسجيل
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                    <thead>
+                        <tr><th>الاسم</th><th>يوم السفر</th><th>المحطة</th><th>الوردية</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for r in all_regs %}
+                        <tr>
+                            <td>{{ r.display_name }}</td>
+                            <td>{{ r.travel_date }}</td>
+                            <td>{{ r.station.name }}</td>
+                            <td>{{ r.shift }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const remaining = {{ bus.get_remaining_seats() }};
+const used = {{ bus.total_seats }} - remaining;
+new Chart(document.getElementById('seatsDonut'), {
+    type: 'doughnut',
+    data: {
+        datasets: [{
+            data: [used, remaining],
+            backgroundColor: [
+                used >= {{ bus.total_seats }} ? '#dc2626' : '#f97316',
+                '#16a34a'
+            ],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        cutout: '72%',
+        responsive: true,
+        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    }
+});
+</script>
+{% endblock %}
