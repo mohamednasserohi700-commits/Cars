@@ -1,7 +1,14 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
+
+# توقيت السعودية UTC+3
+KSA_TZ = timezone(timedelta(hours=3))
+
+def now_ksa():
+    """إرجاع الوقت الحالي بتوقيت السعودية"""
+    return datetime.now(KSA_TZ).replace(tzinfo=None)
 
 
 @login_manager.user_loader
@@ -14,7 +21,7 @@ class Admin(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=now_ksa)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -34,8 +41,8 @@ class Employee(db.Model):
     department = db.Column(db.String(100))
     affiliate = db.Column(db.String(20), default='مكتب')  # مكتب / CFI
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
-    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    created_at = db.Column(db.DateTime, default=now_ksa)
+    updated_at = db.Column(db.DateTime, default=now_ksa, onupdate=now_ksa)
 
     registrations = db.relationship('Registration', backref='employee', lazy='dynamic')
     login_logs = db.relationship('LoginLog', backref='employee', lazy='dynamic')
@@ -49,7 +56,7 @@ class Driver(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     phone = db.Column(db.String(20), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=now_ksa)
 
     primary_buses = db.relationship('Bus', foreign_keys='Bus.driver_id', backref='primary_driver', lazy='dynamic')
     backup_buses = db.relationship('Bus', foreign_keys='Bus.backup_driver_id', backref='backup_driver', lazy='dynamic')
@@ -68,14 +75,14 @@ class Bus(db.Model):
     driver_id = db.Column(db.Integer, db.ForeignKey('drivers.id'), nullable=True)
     backup_driver_id = db.Column(db.Integer, db.ForeignKey('drivers.id'), nullable=True)
     backup_bus_id = db.Column(db.Integer, db.ForeignKey('buses.id'), nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=now_ksa)
 
     stations = db.relationship('Station', backref='bus', lazy='dynamic', cascade='all, delete-orphan')
     registrations = db.relationship('Registration', backref='bus', lazy='dynamic')
     backup_bus = db.relationship('Bus', remote_side='Bus.id', backref='primary_buses', foreign_keys=[backup_bus_id])
 
     def get_today_registrations_count(self):
-        today = datetime.now().date()
+        today = now_ksa().date()
         return self.registrations.filter(
             db.func.date(Registration.registration_date) == today
         ).count()
@@ -96,7 +103,7 @@ class Station(db.Model):
     name = db.Column(db.String(100), nullable=False)
     bus_id = db.Column(db.Integer, db.ForeignKey('buses.id'), nullable=False)
     order = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=now_ksa)
 
     registrations = db.relationship('Registration', backref='station', lazy='dynamic')
 
@@ -119,7 +126,7 @@ class Registration(db.Model):
     phone = db.Column(db.String(20), nullable=False)
     pickup_time = db.Column(db.String(10), nullable=True)  # وقت الركوب من المحطة (HH:MM) يدخله الموظف بنفسه
     travel_date = db.Column(db.Date, nullable=False)
-    registration_date = db.Column(db.DateTime, default=datetime.now)
+    registration_date = db.Column(db.DateTime, default=now_ksa)
     affiliate = db.Column(db.String(20))
 
     @property
@@ -147,7 +154,7 @@ class LoginLog(db.Model):
     device_type = db.Column(db.String(50))
     browser = db.Column(db.String(100))
     status = db.Column(db.String(20))  # success / failed
-    login_time = db.Column(db.DateTime, default=datetime.now)
+    login_time = db.Column(db.DateTime, default=now_ksa)
 
     def __repr__(self):
         return f'<LoginLog {self.global_id} {self.status}>'
@@ -158,7 +165,7 @@ class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(100), unique=True, nullable=False)
     value = db.Column(db.Text)
-    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    updated_at = db.Column(db.DateTime, default=now_ksa, onupdate=now_ksa)
 
     @classmethod
     def get(cls, key, default=None):
@@ -170,7 +177,7 @@ class Settings(db.Model):
         setting = cls.query.filter_by(key=key).first()
         if setting:
             setting.value = value
-            setting.updated_at = datetime.now()
+            setting.updated_at = now_ksa()
         else:
             setting = cls(key=key, value=value)
             db.session.add(setting)
