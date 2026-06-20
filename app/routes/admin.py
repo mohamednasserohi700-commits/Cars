@@ -510,6 +510,85 @@ def change_password():
     return render_template('admin/change_password.html')
 
 
+# ─── ADMIN USERS MANAGEMENT ──────────────────────────────────────────────────
+
+@admin_bp.route('/admins')
+@login_required
+def admin_users():
+    admins = Admin.query.order_by(Admin.created_at.desc()).all()
+    return render_template('admin/admins/index.html', admins=admins)
+
+
+@admin_bp.route('/admins/add', methods=['GET', 'POST'])
+@login_required
+def add_admin():
+    if request.method == 'POST':
+        username = request.form.get('username', '').strip()
+        password = request.form.get('password', '')
+        confirm  = request.form.get('confirm_password', '')
+        if not username or not password:
+            flash('يرجى تعبئة جميع الحقول.', 'danger')
+        elif Admin.query.filter_by(username=username).first():
+            flash('اسم المستخدم موجود مسبقاً.', 'danger')
+        elif password != confirm:
+            flash('كلمتا المرور غير متطابقتين.', 'danger')
+        elif len(password) < 6:
+            flash('كلمة المرور يجب أن تكون 6 أحرف على الأقل.', 'danger')
+        else:
+            new_admin = Admin(username=username)
+            new_admin.set_password(password)
+            db.session.add(new_admin)
+            db.session.commit()
+            flash(f'تم إضافة المشرف "{username}" بنجاح.', 'success')
+            return redirect(url_for('admin.admin_users'))
+    return render_template('admin/admins/form.html', admin_obj=None)
+
+
+@admin_bp.route('/admins/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_admin(id):
+    admin_obj = Admin.query.get_or_404(id)
+    if request.method == 'POST':
+        username    = request.form.get('username', '').strip()
+        new_pw      = request.form.get('password', '')
+        confirm_pw  = request.form.get('confirm_password', '')
+        if not username:
+            flash('اسم المستخدم مطلوب.', 'danger')
+        else:
+            existing = Admin.query.filter_by(username=username).first()
+            if existing and existing.id != id:
+                flash('اسم المستخدم مستخدم من قِبل مشرف آخر.', 'danger')
+            else:
+                admin_obj.username = username
+                if new_pw:
+                    if new_pw != confirm_pw:
+                        flash('كلمتا المرور غير متطابقتين.', 'danger')
+                        return render_template('admin/admins/form.html', admin_obj=admin_obj)
+                    if len(new_pw) < 6:
+                        flash('كلمة المرور يجب أن تكون 6 أحرف على الأقل.', 'danger')
+                        return render_template('admin/admins/form.html', admin_obj=admin_obj)
+                    admin_obj.set_password(new_pw)
+                db.session.commit()
+                flash(f'تم تحديث بيانات المشرف "{username}" بنجاح.', 'success')
+                return redirect(url_for('admin.admin_users'))
+    return render_template('admin/admins/form.html', admin_obj=admin_obj)
+
+
+@admin_bp.route('/admins/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_admin(id):
+    admin_obj = Admin.query.get_or_404(id)
+    if admin_obj.id == current_user.id:
+        flash('لا يمكنك حذف حسابك الحالي.', 'danger')
+        return redirect(url_for('admin.admin_users'))
+    if Admin.query.count() <= 1:
+        flash('يجب أن يكون هناك مشرف واحد على الأقل.', 'danger')
+        return redirect(url_for('admin.admin_users'))
+    username = admin_obj.username
+    db.session.delete(admin_obj)
+    db.session.commit()
+    flash(f'تم حذف المشرف "{username}".', 'success')
+    return redirect(url_for('admin.admin_users'))
 
 
 # ─── LOGIN LOGS ───────────────────────────────────────────────────────────────
