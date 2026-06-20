@@ -1,0 +1,73 @@
+{% extends 'admin/base.html' %}
+{% block title %}إدارة المشرفين{% endblock %}
+{% block page_title %}إدارة المشرفين{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-3">
+    <a href="{{ url_for('admin.add_admin') }}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>إضافة مشرف
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex align-items-center gap-2">
+        <i class="fas fa-user-shield text-primary"></i>
+        <span>المشرفون</span>
+        <span class="badge bg-primary">{{ admins|length }}</span>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم المستخدم</th>
+                    <th>تاريخ الإنشاء</th>
+                    <th>الحالة</th>
+                    <th>إجراء</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for a in admins %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div style="width:36px;height:36px;background:linear-gradient(135deg,#2563eb,#1d4ed8);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+                                <i class="fas fa-user text-white" style="font-size:14px;"></i>
+                            </div>
+                            <strong>{{ a.username }}</strong>
+                        </div>
+                    </td>
+                    <td><small>{{ a.created_at.strftime('%Y-%m-%d %H:%M') }}</small></td>
+                    <td>
+                        {% if a.id == current_user.id %}
+                        <span class="badge bg-success">الحساب الحالي</span>
+                        {% else %}
+                        <span class="badge bg-secondary">مشرف</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{{ url_for('admin.edit_admin', id=a.id) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% if a.id != current_user.id %}
+                            <form method="POST" action="{{ url_for('admin.delete_admin', id=a.id) }}" id="del-admin-{{ a.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="confirmDelete('del-admin-{{ a.id }}', 'المشرف {{ a.username }}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted py-4">لا يوجد مشرفون</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
