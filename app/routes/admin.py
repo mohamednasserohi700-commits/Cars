@@ -468,6 +468,16 @@ def login_logs():
     return render_template('admin/logs/index.html', logs=logs)
 
 
+@admin_bp.route('/login-logs/delete-all', methods=['POST'])
+@login_required
+def delete_all_login_logs():
+    count = LoginLog.query.count()
+    LoginLog.query.delete()
+    db.session.commit()
+    flash(f'تم حذف جميع سجلات الدخول بنجاح ({count} سجل).', 'success')
+    return redirect(url_for('admin.login_logs'))
+
+
 # ─── SETTINGS ────────────────────────────────────────────────────────────────
 
 @admin_bp.route('/settings', methods=['GET', 'POST'])
