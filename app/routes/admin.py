@@ -346,8 +346,15 @@ def registrations():
         except:
             pass
     regs = query.order_by(Registration.registration_date.desc()).all()
+
+    # Count registrations per bus line, based on the same filtered results shown in the table
+    bus_counts = {}
+    for r in regs:
+        bus_counts[r.bus.name] = bus_counts.get(r.bus.name, 0) + 1
+    line_stats = sorted(bus_counts.items(), key=lambda x: x[1], reverse=True)
+
     return render_template('admin/registrations/index.html', registrations=regs, q=q,
-                           shift_f=shift_f, date_f=date_f)
+                           shift_f=shift_f, date_f=date_f, line_stats=line_stats)
 
 
 @admin_bp.route('/registrations/<int:id>/edit', methods=['GET', 'POST'])
@@ -385,6 +392,37 @@ def delete_registration(id):
     db.session.commit()
     flash('تم حذف التسجيل.', 'success')
     return redirect(url_for('admin.registrations'))
+
+
+@admin_bp.route('/registrations/delete-all', methods=['POST'])
+@login_required
+def delete_all_registrations():
+    q = request.form.get('q', '')
+    shift_f = request.form.get('shift', '')
+    date_f = request.form.get('date', '')
+
+    query = Registration.query.outerjoin(Employee).join(Bus)
+    if q:
+        query = query.filter(
+            (Employee.name.ilike(f'%{q}%')) | (Employee.global_id.ilike(f'%{q}%')) | (Registration.guest_global_id.ilike(f'%{q}%'))
+        )
+    if shift_f:
+        query = query.filter(Registration.shift == shift_f)
+    if date_f:
+        try:
+            d = datetime.strptime(date_f, '%Y-%m-%d').date()
+            query = query.filter(func.date(Registration.registration_date) == d)
+        except:
+            pass
+
+    count = query.count()
+    ids = [r.id for r in query.all()]
+    if ids:
+        Registration.query.filter(Registration.id.in_(ids)).delete(synchronize_session=False)
+        db.session.commit()
+
+    flash(f'تم حذف {count} تسجيل بنجاح.', 'success')
+    return redirect(url_for('admin.registrations', q=q, shift=shift_f, date=date_f))
 
 
 @admin_bp.route('/registrations/export')
