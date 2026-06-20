@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
 from flask_login import login_user, logout_user, login_required, current_user
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from app import db
 from app.models import Admin, Employee, LoginLog
 try:
@@ -8,6 +8,10 @@ try:
     UA_AVAILABLE = True
 except ImportError:
     UA_AVAILABLE = False
+
+KSA_TZ = timezone(timedelta(hours=3))
+def now_ksa():
+    return datetime.now(KSA_TZ).replace(tzinfo=None)
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -27,7 +31,7 @@ def log_employee_login(global_id, employee_id, status):
         device_type=device_type,
         browser=browser,
         status=status,
-        login_time=datetime.now()
+        login_time=now_ksa()
     )
     db.session.add(log)
     db.session.commit()
