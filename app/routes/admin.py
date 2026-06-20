@@ -242,6 +242,17 @@ def delete_bus(id):
     return redirect(url_for('admin.buses'))
 
 
+@admin_bp.route('/buses/<int:id>/toggle-availability', methods=['POST'])
+@login_required
+def toggle_bus_availability(id):
+    bus = Bus.query.get_or_404(id)
+    bus.is_available = not bus.is_available
+    db.session.commit()
+    status = 'متاح' if bus.is_available else 'غير متاح'
+    flash(f'تم تغيير حالة الخط "{bus.name}" إلى {status}.', 'success')
+    return redirect(url_for('admin.buses'))
+
+
 # ─── STATIONS ────────────────────────────────────────────────────────────────
 
 @admin_bp.route('/buses/<int:bus_id>/stations')
