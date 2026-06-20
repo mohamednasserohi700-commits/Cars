@@ -1,7 +1,11 @@
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
-from datetime import datetime, date
+from datetime import datetime, date, timezone, timedelta
 from app import db
 from app.models import Employee, Bus, Station, Registration, Settings
+
+KSA_TZ = timezone(timedelta(hours=3))
+def now_ksa():
+    return datetime.now(KSA_TZ).replace(tzinfo=None)
 
 employee_bp = Blueprint('employee', __name__)
 
@@ -46,14 +50,14 @@ def check_registration_open():
 
     # Check day
     allowed_days = Settings.get('allowed_days', '0,1,2,3,4')
-    today_weekday = str(datetime.now().weekday())
+    today_weekday = str(now_ksa().weekday())
     if allowed_days and today_weekday not in allowed_days.split(','):
         return False, 'wrong_day'
 
     # Check time
     time_from = Settings.get('time_from', '00:00')
     time_to = Settings.get('time_to', '23:59')
-    now_time = datetime.now().strftime('%H:%M')
+    now_time = now_ksa().strftime('%H:%M')
     if time_from and time_to:
         if not (time_from <= now_time <= time_to):
             return False, 'wrong_time'
