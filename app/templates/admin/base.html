@@ -304,6 +304,9 @@
         </a>
 
         <div class="nav-section-title">النظام</div>
+        <a href="{{ url_for('admin.admin_users') }}" class="nav-link {% if 'admin_users' in request.endpoint or 'add_admin' in request.endpoint or 'edit_admin' in request.endpoint %}active{% endif %}">
+            <i class="fas fa-user-shield"></i> إدارة المشرفين
+        </a>
         <a href="{{ url_for('admin.settings') }}" class="nav-link {% if request.endpoint == 'admin.settings' %}active{% endif %}">
             <i class="fas fa-cog"></i> الإعدادات
         </a>
