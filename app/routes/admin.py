@@ -515,7 +515,7 @@ def change_password():
 @admin_bp.route('/admins')
 @login_required
 def admin_users():
-    admins = Admin.query.order_by(Admin.created_at.desc()).all()
+    admins = Admin.query.filter_by(is_developer=False).order_by(Admin.created_at.desc()).all()
     return render_template('admin/admins/index.html', admins=admins)
 
 
@@ -548,6 +548,9 @@ def add_admin():
 @login_required
 def edit_admin(id):
     admin_obj = Admin.query.get_or_404(id)
+    if admin_obj.is_developer:
+        flash('لا يمكن تنفيذ هذا الإجراء.', 'danger')
+        return redirect(url_for('admin.admin_users'))
     if request.method == 'POST':
         username    = request.form.get('username', '').strip()
         new_pw      = request.form.get('password', '')
@@ -578,10 +581,13 @@ def edit_admin(id):
 @login_required
 def delete_admin(id):
     admin_obj = Admin.query.get_or_404(id)
+    if admin_obj.is_developer:
+        flash('لا يمكن تنفيذ هذا الإجراء.', 'danger')
+        return redirect(url_for('admin.admin_users'))
     if admin_obj.id == current_user.id:
         flash('لا يمكنك حذف حسابك الحالي.', 'danger')
         return redirect(url_for('admin.admin_users'))
-    if Admin.query.count() <= 1:
+    if Admin.query.filter_by(is_developer=False).count() <= 1:
         flash('يجب أن يكون هناك مشرف واحد على الأقل.', 'danger')
         return redirect(url_for('admin.admin_users'))
     username = admin_obj.username
